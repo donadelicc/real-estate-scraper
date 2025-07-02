@@ -152,7 +152,7 @@ export default function Home() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="relative min-h-screen from-slate-50 to-slate-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
         <div className="relative">
           {/* Decorative elements */}
@@ -167,10 +167,6 @@ export default function Home() {
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent pb-1">
                   Real Estate Scraper
                 </h1>
-                <p className="text-lg sm:text-xl text-slate-600 max-w-3xl mx-auto">
-                  Proof of Concept: Extract property URLs and convert them to
-                  structured data
-                </p>
               </div>
 
               {/* Demo section */}
