@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Card from "@/components/ui/Card";
+import GradientButton from "@/components/ui/GradientButton";
 
 export default function Home() {
   const router = useRouter();
@@ -18,29 +20,31 @@ export default function Home() {
           <div className="absolute -bottom-4 -right-4 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl"></div>
 
           {/* Main content */}
-          <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-lg ring-1 ring-black/5 p-8 sm:p-12">
-            <div className="text-center space-y-8 max-w-6xl mx-auto">
+          <Card variant="glass" padding="lg">
+            <div className="text-center space-y-6 max-w-6xl mx-auto">
               {/* Header section */}
               <div className="space-y-4">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent pb-1">
                   Real Estate Scraper
                 </h1>
                 <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
-                  Welcome to the Real Estate Scraper. Click below to get started with the agent.
+                  Welcome to the Real Estate Scraper. Click below to get started
+                  with the agent.
                 </p>
               </div>
 
               {/* Redirect button */}
-              <div className="space-y-6">
-                <button
+              <div className="space-y-4">
+                <GradientButton
                   onClick={handleRedirect}
-                  className="w-full max-w-md mx-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 ease-out hover:-translate-y-[1px]"
+                  size="lg"
+                  className="w-full max-w-md mx-auto"
                 >
                   Go to Agent
-                </button>
+                </GradientButton>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </div>

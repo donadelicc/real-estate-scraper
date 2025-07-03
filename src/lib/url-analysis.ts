@@ -1,7 +1,6 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { z } from "zod";
 import { JsonOutputParser } from "@langchain/core/output_parsers";
 
 // Initialize Firecrawl app
@@ -46,7 +45,7 @@ export interface URLAnalysisRequest {
   urls: string[];
 }
 
-export interface URLAnalysisResponse extends URLTypeAnalysis {}
+export type URLAnalysisResponse = URLTypeAnalysis;
 
 /**
  * Extract ALL URLs from a base URL (comprehensive mapping, not filtered)
@@ -146,27 +145,33 @@ Only include categories that actually exist in the provided URLs.
     const MAX_URLS = 2000; // Maximum total URLs to process
 
     let urlsToAnalyze = urls;
-    
+
     // If we have too many URLs, take a strategic sample
     if (urls.length > MAX_URLS) {
       console.log(`\n=== URL SAMPLING ===`);
-      console.log(`Total URLs: ${urls.length}, sampling ${MAX_URLS} for analysis`);
-      
+      console.log(
+        `Total URLs: ${urls.length}, sampling ${MAX_URLS} for analysis`,
+      );
+
       // Take URLs from different parts of the list to get a representative sample
       const step = Math.floor(urls.length / MAX_URLS);
-      urlsToAnalyze = urls.filter((_, index) => index % step === 0).slice(0, MAX_URLS);
-      
+      urlsToAnalyze = urls
+        .filter((_, index) => index % step === 0)
+        .slice(0, MAX_URLS);
+
       console.log(`Selected ${urlsToAnalyze.length} URLs for analysis`);
     }
 
     // Process URLs in batches to avoid token limits
-    let allCategories: Record<string, URLCategory> = {};
-    
+    const allCategories: Record<string, URLCategory> = {};
+
     for (let i = 0; i < urlsToAnalyze.length; i += BATCH_SIZE) {
       const batch = urlsToAnalyze.slice(i, i + BATCH_SIZE);
-      const urlData = batch.join('\n');
-      
-      console.log(`\n=== Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(urlsToAnalyze.length / BATCH_SIZE)} ===`);
+      const urlData = batch.join("\n");
+
+      console.log(
+        `\n=== Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(urlsToAnalyze.length / BATCH_SIZE)} ===`,
+      );
       console.log(`URLs in batch: ${batch.length}`);
 
       try {
@@ -177,36 +182,45 @@ Only include categories that actually exist in the provided URLs.
 
         // Merge categories from this batch
         if (batchResponse.url_categories) {
-          Object.entries(batchResponse.url_categories).forEach(([category, info]) => {
-            if (!allCategories[category]) {
-              allCategories[category] = {
-                type: info.type,
-                examples: [...info.examples]
-              };
-            } else {
-              // Merge examples, avoiding duplicates
-              const existingExamples = new Set(allCategories[category].examples);
-              info.examples.forEach(example => {
-                if (!existingExamples.has(example)) {
-                  allCategories[category].examples.push(example);
+          Object.entries(batchResponse.url_categories).forEach(
+            ([category, info]) => {
+              if (!allCategories[category]) {
+                allCategories[category] = {
+                  type: info.type,
+                  examples: [...info.examples],
+                };
+              } else {
+                // Merge examples, avoiding duplicates
+                const existingExamples = new Set(
+                  allCategories[category].examples,
+                );
+                info.examples.forEach((example) => {
+                  if (!existingExamples.has(example)) {
+                    allCategories[category].examples.push(example);
+                  }
+                });
+
+                // Keep only up to 5 examples per category
+                if (allCategories[category].examples.length > 5) {
+                  allCategories[category].examples = allCategories[
+                    category
+                  ].examples.slice(0, 5);
                 }
-              });
-              
-              // Keep only up to 5 examples per category
-              if (allCategories[category].examples.length > 5) {
-                allCategories[category].examples = allCategories[category].examples.slice(0, 5);
               }
-            }
-          });
+            },
+          );
         }
       } catch (error) {
-        console.error(`Error processing batch ${Math.floor(i / BATCH_SIZE) + 1}:`, error);
+        console.error(
+          `Error processing batch ${Math.floor(i / BATCH_SIZE) + 1}:`,
+          error,
+        );
         // Continue with other batches
       }
     }
 
     const response: URLTypeAnalysis = {
-      url_categories: allCategories
+      url_categories: allCategories,
     };
 
     console.log("\n=== URL TYPES ANALYSIS RESULT ===");
@@ -228,7 +242,7 @@ Only include categories that actually exist in the provided URLs.
  * This function takes category examples and generates one precise regex pattern per category
  */
 export async function generateRegexPatternsForCategories(
-  categoryExamples: Record<string, string[]>
+  categoryExamples: Record<string, string[]>,
 ): Promise<CategoryPatterns> {
   try {
     // Initialize LLM
@@ -253,8 +267,8 @@ Where each category has a single regex pattern that matches the provided example
 
     // Prepare category data for analysis
     const categoryData = Object.entries(categoryExamples)
-      .map(([category, examples]) => `${category}:\n${examples.join('\n')}`)
-      .join('\n\n');
+      .map(([category, examples]) => `${category}:\n${examples.join("\n")}`)
+      .join("\n\n");
 
     // Create prompt template
     const prompt = await ChatPromptTemplate.fromMessages([
@@ -320,4 +334,4 @@ export async function performCompleteUrlAnalysis(baseUrl: string): Promise<{
       `Complete URL analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
-} 
+}

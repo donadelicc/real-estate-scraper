@@ -26,10 +26,13 @@ export type ExtractedData = Record<string, string | null>;
  */
 export function createCustomSchema(dataFields: DataField[]) {
   const schemaObject: Record<string, z.ZodNullable<z.ZodString>> = {};
-  
-  dataFields.forEach(field => {
+
+  dataFields.forEach((field) => {
     if (field.name) {
-      schemaObject[field.name] = z.string().nullable().describe(field.description);
+      schemaObject[field.name] = z
+        .string()
+        .nullable()
+        .describe(field.description);
     }
   });
 
@@ -41,9 +44,9 @@ export function createCustomSchema(dataFields: DataField[]) {
  */
 export function createFormatInstructions(dataFields: DataField[]): string {
   const fieldSchema = dataFields
-    .filter(field => field.name)
-    .map(field => `  "${field.name}": "string | null"`)
-    .join(',\n');
+    .filter((field) => field.name)
+    .map((field) => `  "${field.name}": "string | null"`)
+    .join(",\n");
 
   return `Respond only in valid JSON. The JSON object you return should match the following schema:
 {
@@ -59,12 +62,17 @@ Where each field should be:
 /**
  * Create a custom prompt template based on user-defined data fields
  */
-export function createCustomPrompt(dataFields: DataField[]): ChatPromptTemplate {
+export function createCustomPrompt(
+  dataFields: DataField[],
+): ChatPromptTemplate {
   // Build the field extraction instructions
   const fieldInstructions = dataFields
-    .filter(field => field.name)
-    .map(field => `- ${field.name}: ${field.description} (example: "${field.example}")`)
-    .join('\n');
+    .filter((field) => field.name)
+    .map(
+      (field) =>
+        `- ${field.name}: ${field.description} (example: "${field.example}")`,
+    )
+    .join("\n");
 
   const systemPrompt = `You are a web scraping expert. Extract property/real estate information and return ONLY a valid JSON object with the exact structure specified.
 
@@ -84,7 +92,7 @@ ${fieldInstructions}
  */
 export async function analyzeCustomPropertyData(
   markdownContent: string,
-  config: CustomSchemaConfig
+  config: CustomSchemaConfig,
 ): Promise<ExtractedData> {
   try {
     // Initialize LLM
@@ -101,7 +109,7 @@ export async function analyzeCustomPropertyData(
     const customSchema = createCustomSchema(config.dataFields);
     const customPrompt = createCustomPrompt(config.dataFields);
     const formatInstructions = createFormatInstructions(config.dataFields);
-    
+
     // Create chain and analyze data
     const promptWithInstructions = await customPrompt.partial({
       format_instructions: formatInstructions,
@@ -113,9 +121,11 @@ export async function analyzeCustomPropertyData(
     const formattedMessages = await promptWithInstructions.formatMessages({
       data: markdownContent,
     });
-    
+
     formattedMessages.forEach((message, index) => {
-      console.log(`\n--- Message ${index + 1} (${message.constructor.name}) ---`);
+      console.log(
+        `\n--- Message ${index + 1} (${message.constructor.name}) ---`,
+      );
       console.log(message.content);
     });
     console.log("------------CUSTOM PROMPT WITH REAL DATA END------------");
@@ -145,12 +155,12 @@ export async function analyzeCustomPropertyData(
 export function createScrapingJobConfig(
   baseUrl: string,
   selectedCategories: string[],
-  dataFields: DataField[]
+  dataFields: DataField[],
 ): CustomSchemaConfig {
   return {
     baseUrl,
     selectedCategories,
-    dataFields: dataFields.filter(field => field.name && field.description) // Only include valid fields
+    dataFields: dataFields.filter((field) => field.name && field.description), // Only include valid fields
   };
 }
 
@@ -158,7 +168,7 @@ export function createScrapingJobConfig(
  * Get field names for CSV header generation
  */
 export function getFieldNames(dataFields: DataField[]): string[] {
-  return dataFields.filter(field => field.name).map(field => field.name);
+  return dataFields.filter((field) => field.name).map((field) => field.name);
 }
 
 /**
@@ -182,13 +192,15 @@ export function validateScrapingConfig(config: CustomSchemaConfig): {
     errors.push("At least one data field must be defined");
   }
 
-  const validFields = config.dataFields.filter(field => field.name && field.description);
+  const validFields = config.dataFields.filter(
+    (field) => field.name && field.description,
+  );
   if (validFields.length === 0) {
     errors.push("At least one data field must have both name and description");
   }
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
-} 
+}

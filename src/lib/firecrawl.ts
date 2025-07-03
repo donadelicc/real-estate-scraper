@@ -71,31 +71,64 @@ export async function getPropertyUrls(baseUrl: string): Promise<URLResponse> {
 }
 
 /**
+ * Utility function to delay execution
+ */
+async function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
  * Scrape content from a property URL and return as markdown.
+ * Includes retry logic for rate limiting (429 errors).
  */
 export async function getPropertyContent(
   url: string,
 ): Promise<ContentResponse> {
-  try {
-    const app = getFirecrawlApp();
+  const maxRetries = 3;
+  const baseDelay = 2000; // 2 seconds
 
-    const response = await app.scrapeUrl(url, {
-      formats: ["markdown"],
-      onlyMainContent: true,
-      excludeTags: ["img", "form"],
-    });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const app = getFirecrawlApp();
 
-    if (response.success && response.markdown) {
-      return {
-        markdown: response.markdown,
-      };
-    } else {
-      throw new Error("Failed to extract markdown content");
+      const response = await app.scrapeUrl(url, {
+        formats: ["markdown"],
+        onlyMainContent: true,
+        excludeTags: ["img", "form"],
+      });
+
+      if (response.success && response.markdown) {
+        return {
+          markdown: response.markdown,
+        };
+      } else {
+        throw new Error("Failed to extract markdown content");
+      }
+    } catch (error: unknown) {
+      // Check if it's a rate limit error (429)
+      const errorObj = error as { statusCode?: number; message?: string };
+      const isRateLimit =
+        errorObj?.statusCode === 429 ||
+        errorObj?.message?.includes("429") ||
+        errorObj?.message?.includes("Too Many Requests");
+
+      if (isRateLimit && attempt < maxRetries) {
+        const delayMs = baseDelay * Math.pow(2, attempt - 1); // Exponential backoff
+        console.log(
+          `Rate limit hit for ${url}. Retrying in ${delayMs}ms... (attempt ${attempt}/${maxRetries})`,
+        );
+        await delay(delayMs);
+        continue;
+      }
+
+      // If it's not a rate limit error, or we've exhausted retries, throw the error
+      console.error("Error scraping content:", error);
+      throw new Error(
+        `Error scraping content: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
-  } catch (error) {
-    console.error("Error scraping content:", error);
-    throw new Error(
-      `Error scraping content: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
   }
+
+  // This should never be reached, but TypeScript needs it
+  throw new Error("Failed to scrape content after all retries");
 }

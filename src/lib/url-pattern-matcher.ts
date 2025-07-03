@@ -1,4 +1,4 @@
-import type { URLCategory, URLPattern } from './url-analysis';
+import type { URLCategory, URLPattern } from "./url-analysis";
 
 export interface MatchResult {
   matches: boolean;
@@ -24,10 +24,10 @@ export class URLPatternMatcher {
    */
   static matchByRegex(url: string, patterns: string[]): boolean {
     if (!patterns || patterns.length === 0) return false;
-    
-    return patterns.some(pattern => {
+
+    return patterns.some((pattern) => {
       try {
-        const regex = new RegExp(pattern, 'i');
+        const regex = new RegExp(pattern, "i");
         return regex.test(url);
       } catch (error) {
         console.warn(`Invalid regex pattern: ${pattern}`, error);
@@ -41,16 +41,16 @@ export class URLPatternMatcher {
    */
   static matchByPath(url: string, pathPatterns: string[]): boolean {
     if (!pathPatterns || pathPatterns.length === 0) return false;
-    
+
     try {
       const urlPath = new URL(url).pathname;
-      return pathPatterns.some(pattern => {
+      return pathPatterns.some((pattern) => {
         // Convert wildcard pattern to regex
         const regexPattern = pattern
-          .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special regex chars
-          .replace(/\\?\*/g, '.*'); // Convert * to .*
-        
-        const regex = new RegExp(`^${regexPattern}`, 'i');
+          .replace(/[.*+?^${}()|[\]\\]/g, "\\$&") // Escape special regex chars
+          .replace(/\\?\*/g, ".*"); // Convert * to .*
+
+        const regex = new RegExp(`^${regexPattern}`, "i");
         return regex.test(urlPath);
       });
     } catch (error) {
@@ -64,10 +64,10 @@ export class URLPatternMatcher {
    */
   static matchByIndicators(url: string, indicators: string[]): boolean {
     if (!indicators || indicators.length === 0) return false;
-    
+
     const urlLower = url.toLowerCase();
-    return indicators.some(indicator => 
-      urlLower.includes(indicator.toLowerCase())
+    return indicators.some((indicator) =>
+      urlLower.includes(indicator.toLowerCase()),
     );
   }
 
@@ -87,12 +87,12 @@ export class URLPatternMatcher {
 
     // Check if URL is in examples
     if (this.matchByExamples(url, category.examples || [])) {
-      matches.push('examples');
+      matches.push("examples");
     }
 
     return {
       matches: matches.length > 0,
-      matchedBy: matches
+      matchedBy: matches,
     };
   }
 
@@ -104,12 +104,12 @@ export class URLPatternMatcher {
 
     // Check the single regex pattern
     if (this.matchByRegex(url, [pattern.regex])) {
-      matches.push('regex');
+      matches.push("regex");
     }
 
     return {
       matches: matches.length > 0,
-      matchedBy: matches
+      matchedBy: matches,
     };
   }
 
@@ -119,25 +119,25 @@ export class URLPatternMatcher {
   static filterUrlsByCategories(
     allUrls: string[],
     selectedCategories: string[],
-    urlAnalysis: { url_categories: Record<string, URLCategory> }
+    urlAnalysis: { url_categories: Record<string, URLCategory> },
   ): FilterResult {
     const categoryMatches: Record<string, CategoryMatch> = {};
     const matchedUrls = new Set<string>();
 
     // Initialize category matches
-    selectedCategories.forEach(categoryName => {
+    selectedCategories.forEach((categoryName) => {
       categoryMatches[categoryName] = { urls: [] };
     });
 
     // For each selected category
-    selectedCategories.forEach(categoryName => {
+    selectedCategories.forEach((categoryName) => {
       const category = urlAnalysis.url_categories[categoryName];
       if (!category) return;
 
       // Test each URL against this category
-      allUrls.forEach(url => {
+      allUrls.forEach((url) => {
         const matchResult = this.matchCategory(url, category);
-        
+
         if (matchResult.matches) {
           categoryMatches[categoryName].urls.push(url);
           matchedUrls.add(url);
@@ -153,8 +153,8 @@ export class URLPatternMatcher {
       categoryMatches,
       stats: {
         totalUrls: allUrls.length,
-        filteredUrls: filteredUrls.length
-      }
+        filteredUrls: filteredUrls.length,
+      },
     };
   }
 
@@ -164,25 +164,25 @@ export class URLPatternMatcher {
   static filterUrlsByPatterns(
     allUrls: string[],
     selectedCategories: string[],
-    urlPatterns: Record<string, URLPattern>
+    urlPatterns: Record<string, URLPattern>,
   ): FilterResult {
     const categoryMatches: Record<string, CategoryMatch> = {};
     const matchedUrls = new Set<string>();
 
     // Initialize category matches
-    selectedCategories.forEach(categoryName => {
+    selectedCategories.forEach((categoryName) => {
       categoryMatches[categoryName] = { urls: [] };
     });
 
     // For each selected category
-    selectedCategories.forEach(categoryName => {
+    selectedCategories.forEach((categoryName) => {
       const pattern = urlPatterns[categoryName];
       if (!pattern) return;
 
       // Test each URL against this pattern
-      allUrls.forEach(url => {
+      allUrls.forEach((url) => {
         const matchResult = this.matchPattern(url, pattern);
-        
+
         if (matchResult.matches) {
           categoryMatches[categoryName].urls.push(url);
           matchedUrls.add(url);
@@ -198,10 +198,8 @@ export class URLPatternMatcher {
       categoryMatches,
       stats: {
         totalUrls: allUrls.length,
-        filteredUrls: filteredUrls.length
-      }
+        filteredUrls: filteredUrls.length,
+      },
     };
   }
-} 
-
- 
+}
